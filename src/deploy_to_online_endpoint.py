@@ -2,6 +2,7 @@ from azure.identity import DefaultAzureCredential
 from azure.ai.ml import MLClient
 from azure.ai.ml.entities import ManagedOnlineEndpoint, ManagedOnlineDeployment, Model
 from azure.ai.ml.constants import AssetTypes
+from azure.core.exceptions import ResourceNotFoundError
 
 import argparse
 import datetime
@@ -33,7 +34,7 @@ def ensure_endpoint(ml_client: MLClient, endpoint_name: str) -> ManagedOnlineEnd
     try:
         endpoint = ml_client.online_endpoints.get(name=endpoint_name)
         return endpoint
-    except Exception:
+    except ResourceNotFoundError:
         unique_suffix = datetime.datetime.now().strftime("%m%d%H%M%f")
         name = endpoint_name or f"endpoint-{unique_suffix}"
 
@@ -43,7 +44,7 @@ def ensure_endpoint(ml_client: MLClient, endpoint_name: str) -> ManagedOnlineEnd
             auth_mode="key",
         )
 
-        return ml_client.begin_create_or_update(endpoint).result()
+        return ml_client.online_endpoints.begin_create_or_update(endpoint).result()
 
 
 def create_or_update_deployment(
@@ -71,7 +72,7 @@ def create_or_update_deployment(
 def set_traffic_to_deployment(ml_client: MLClient, endpoint_name: str, deployment_name: str) -> None:
     endpoint = ml_client.online_endpoints.get(name=endpoint_name)
     endpoint.traffic = {deployment_name: 100}
-    ml_client.begin_create_or_update(endpoint).result()
+    ml_client.online_endpoints.begin_create_or_update(endpoint).result()
 
 
 def main() -> None:
