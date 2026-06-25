@@ -74,10 +74,12 @@ jobs:
         run: |
           JOB_NAME="${{ steps.train.outputs.job_name }}"
           mkdir -p downloaded-job
-          az ml job download --name "$JOB_NAME" --download-path downloaded-job
+          az ml job download --name "$JOB_NAME" --output-name metrics_output --download-path downloaded-job
 
           METRICS_FILE=$(find downloaded-job -name metrics.json | head -n 1)
           if [ -z "$METRICS_FILE" ]; then
+            echo "Downloaded files:" >&2
+            find downloaded-job -maxdepth 5 -type f | sort >&2 || true
             echo "No metrics.json found in downloaded job outputs." >&2
             exit 1
           fi
